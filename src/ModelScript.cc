@@ -6,6 +6,7 @@
 
 #include "Internal.hh"
 #include "ModelScriptDsl.hh"
+#include "ModelScriptGenerator.hh"
 
 #include <sstream>
 #include <unordered_map>
@@ -20,8 +21,8 @@ namespace zenkit {
 		// model_end = 0xF2FF,
 		MESH_AND_TREE = 0xF300,
 		REGISTER_MESH = 0xF400,
-		// animation_enum = 0xF500,
-		// animation_enum_end = 0xF5FF,
+		animation_enum = 0xF500,
+		animation_enum_end = 0xF5FF,
 		// CHUNK_ANI_MAX_FPS           = 0xF510,
 		ANIMATION = 0xF520,
 		ANIMATION_ALIAS = 0xF530,
@@ -195,6 +196,7 @@ namespace zenkit {
 			    }
 			    case ModelScriptBinaryChunkType::REGISTER_MESH:
 				    script.meshes.push_back(c->read_line(true));
+				    script.lines.push_back({MdsElementType::MESH, script.meshes.size() - 1});
 				    break;
 			    case ModelScriptBinaryChunkType::ANIMATION: {
 				    MdsAnimation anim {};
@@ -213,6 +215,7 @@ namespace zenkit {
 				    anim.speed = c->read_float();
 				    anim.collision_volume_scale = c->read_float();
 				    script.animations.push_back(std::move(anim));
+				    script.lines.push_back({MdsElementType::ANIMATION, script.animations.size() - 1});
 				    ++ani_index;
 				    break;
 			    }
@@ -228,6 +231,7 @@ namespace zenkit {
 				    alias.direction =
 				        c->read_line(false).find('R') == 0 ? AnimationDirection::BACKWARD : AnimationDirection::FORWARD;
 				    script.aliases.push_back(std::move(alias));
+				    script.lines.push_back({MdsElementType::ANIMATION_ALIAS, script.aliases.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::ANIMATION_BLEND: {
@@ -237,6 +241,7 @@ namespace zenkit {
 				    blend.blend_in = c->read_float();
 				    blend.blend_out = c->read_float();
 				    script.blends.push_back(std::move(blend));
+				    script.lines.push_back({MdsElementType::ANIMATION_BLEND, script.blends.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::ANIMATION_COMBINE: {
@@ -250,10 +255,12 @@ namespace zenkit {
 				    combo.model = c->read_line(false);
 				    combo.last_frame = c->read_int();
 				    script.combinations.push_back(std::move(combo));
+				    script.lines.push_back({MdsElementType::ANIMATION_COMBINE, script.combinations.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::ANIMATION_DISABLE:
 				    script.disabled_animations.push_back(c->read_line(false));
+					script.lines.push_back({MdsElementType::ANIMATION_DISABLED, script.disabled_animations.size() - 1});
 				    break;
 			    case ModelScriptBinaryChunkType::EVENT_CAMERA_TREMOR: {
 				    MdsCameraTremor trem {};
@@ -263,6 +270,7 @@ namespace zenkit {
 				    trem.field3 = c->read_int();
 				    trem.field4 = c->read_int();
 				    script.animations[ani_index].tremors.push_back(trem);
+				    script.animations[ani_index].event_lines.push_back({MdsAniEventType::CAMERA_TREMOR, script.animations[ani_index].tremors.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::EVENT_SFX: {
@@ -272,6 +280,7 @@ namespace zenkit {
 				    effect.range = c->read_float();
 				    effect.empty_slot = c->read_uint() != 0;
 				    script.animations[ani_index].sfx.push_back(std::move(effect));
+				    script.animations[ani_index].event_lines.push_back({MdsAniEventType::SOUND_EFFECT, script.animations[ani_index].sfx.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::EVENT_SFX_GROUND: {
@@ -281,6 +290,7 @@ namespace zenkit {
 				    effect.range = c->read_float();
 				    effect.empty_slot = c->read_uint() != 0;
 				    script.animations[ani_index].sfx_ground.push_back(std::move(effect));
+				    script.animations[ani_index].event_lines.push_back({MdsAniEventType::SOUND_EFFECT_GROUND, script.animations[ani_index].sfx_ground.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::MODEL_TAG: {
@@ -294,6 +304,7 @@ namespace zenkit {
 
 				    tag.bone = c->read_line(true);
 				    script.model_tags.push_back(std::move(tag));
+				    script.lines.push_back({MdsElementType::MODEL_TAG, script.model_tags.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::EVENT_TAG: {
@@ -374,6 +385,7 @@ namespace zenkit {
 				    }
 
 				    script.animations[ani_index].events.push_back(std::move(event));
+				    script.animations[ani_index].event_lines.push_back({MdsAniEventType::EVENT_TAG, script.animations[ani_index].events.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::EVENT_PFX: {
@@ -384,6 +396,7 @@ namespace zenkit {
 				    effect.position = c->read_line(false);
 				    effect.attached = c->read_uint() != 0;
 				    script.animations[ani_index].pfx.push_back(std::move(effect));
+				    script.animations[ani_index].event_lines.push_back({MdsAniEventType::PARTICLE_EFFECT, script.animations[ani_index].pfx.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::EVENT_PFX_STOP: {
@@ -391,6 +404,7 @@ namespace zenkit {
 				    effect.frame = c->read_int();
 				    effect.index = c->read_int();
 				    script.animations[ani_index].pfx_stop.push_back(effect);
+				    script.animations[ani_index].event_lines.push_back({MdsAniEventType::PARTICLE_EFFECT_STOP, script.animations[ani_index].pfx_stop.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::EVENT_MM_ANI: {
@@ -401,6 +415,7 @@ namespace zenkit {
 				    (void) c->read_float();
 				    (void) c->read_float();
 				    script.animations[ani_index].morph.push_back(std::move(anim));
+				    script.animations[ani_index].event_lines.push_back({MdsAniEventType::MORPH_ANIMATION, script.animations[ani_index].morph.size() - 1});
 				    break;
 			    }
 			    case ModelScriptBinaryChunkType::ROOT:
@@ -415,9 +430,13 @@ namespace zenkit {
 				    break;
 			    }
 				    // case ModelScriptBinaryChunkType::model:
-				    // case ModelScriptBinaryChunkType::animation_enum:
+				case ModelScriptBinaryChunkType::animation_enum:
+					script.lines.push_back({MdsElementType::ANI_ENUM, 0});
+					break;
 				    // case ModelScriptBinaryChunkType::animation_events_end:
-				    // case ModelScriptBinaryChunkType::animation_enum_end:
+				case ModelScriptBinaryChunkType::animation_enum_end:
+					script.lines.push_back({MdsElementType::ANI_ENUM_END, 0});
+					break;
 				    // case ModelScriptBinaryChunkType::model_end:
 			    case ModelScriptBinaryChunkType::END:
 				    // empty
@@ -443,6 +462,16 @@ namespace zenkit {
 		}
 
 		this->load_source(r);
+	}
+
+	void ModelScript::save_binary(Write* w) {
+		MdsBinaryGenerator g {w};
+		g.generate_script(*this);
+	}
+
+	void ModelScript::save_source(Write* w) {
+		MdsGenerator g {w};
+		g.generate_script(*this);
 	}
 
 	void ModelScript::load_binary(Read* r) {

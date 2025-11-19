@@ -313,6 +313,8 @@ namespace zenkit {
 			} else if (iequals(kw, "registerMesh")) {
 				script.meshes.push_back(this->parse_registerMesh());
 			} else if (iequals(kw, "aniEnum")) {
+				script.lines.push_back({MdsElementType::MESH, script.meshes.size() - 1});
+			} else if (iequals(kw, "aniEnum")) {
 				this->parse_aniEnum(script);
 			} else {
 				ZKLOGW("ModelScript",
@@ -338,9 +340,11 @@ namespace zenkit {
 
 	void MdsParser::parse_aniEnum(ModelScript& into) {
 		this->expect<MdsToken::LBRACE>();
+		into.lines.push_back({MdsElementType::ANI_ENUM, 0}); // Placeholder for aniEnum start
 
 		while (!this->eof()) {
 			if (this->maybe<MdsToken::RBRACE>() || this->maybe<MdsToken::END_OF_FILE>()) {
+				into.lines.push_back({MdsElementType::ANI_ENUM_END, 0}); // Placeholder for aniEnum end
 				break;
 			}
 
@@ -356,7 +360,22 @@ namespace zenkit {
 			} else if (iequals(kw, "aniDisable")) {
 				into.disabled_animations.push_back(this->parse_aniDisable());
 			} else if (iequals(kw, "modelTag")) {
+				into.lines.push_back({MdsElementType::ANIMATION, into.animations.size() - 1});
+			} else if (iequals(kw, "aniBlend")) {
+				into.blends.push_back(this->parse_aniBlend());
+				into.lines.push_back({MdsElementType::ANIMATION_BLEND, into.blends.size() - 1});
+			} else if (iequals(kw, "aniAlias")) {
+				into.aliases.push_back(this->parse_aniAlias());
+				into.lines.push_back({MdsElementType::ANIMATION_ALIAS, into.aliases.size() - 1});
+			} else if (iequals(kw, "aniComb")) {
+				into.combinations.push_back(this->parse_aniComb());
+				into.lines.push_back({MdsElementType::ANIMATION_COMBINE, into.combinations.size() - 1});
+			} else if (iequals(kw, "aniDisable")) {
+				into.disabled_animations.push_back(this->parse_aniDisable());
+				into.lines.push_back({MdsElementType::ANIMATION_DISABLED, into.disabled_animations.size() - 1});
+			} else if (iequals(kw, "modelTag")) {
 				into.model_tags.push_back(this->parse_modelTag());
+				into.lines.push_back({MdsElementType::MODEL_TAG, into.model_tags.size() - 1});
 			} else {
 				throw ScriptSyntaxError {_m_stream.format_location(), "invalid KEYWORD in \"aniEnum\" block: " + kw};
 			}
@@ -383,7 +402,25 @@ namespace zenkit {
 			} else if (iequals(kw, "*eventMMStartAni")) {
 				ani.morph.push_back(this->parse_eventMMStartAni());
 			} else if (iequals(kw, "*eventCamTremor")) {
+				ani.event_lines.push_back({MdsAniEventType::EVENT_TAG, ani.events.size() - 1});
+			} else if (iequals(kw, "*eventSFX")) {
+				ani.sfx.push_back(this->parse_eventSFX());
+				ani.event_lines.push_back({MdsAniEventType::SOUND_EFFECT, ani.sfx.size() - 1});
+			} else if (iequals(kw, "*eventSFXGrnd")) {
+				ani.sfx_ground.push_back(this->parse_eventSFXGrnd());
+				ani.event_lines.push_back({MdsAniEventType::SOUND_EFFECT_GROUND, ani.sfx_ground.size() - 1});
+			} else if (iequals(kw, "*eventPFX")) {
+				ani.pfx.push_back(this->parse_eventPFX());
+				ani.event_lines.push_back({MdsAniEventType::PARTICLE_EFFECT, ani.pfx.size() - 1});
+			} else if (iequals(kw, "*eventPFXStop")) {
+				ani.pfx_stop.push_back(this->parse_eventPFXStop());
+				ani.event_lines.push_back({MdsAniEventType::PARTICLE_EFFECT_STOP, ani.pfx_stop.size() - 1});
+			} else if (iequals(kw, "*eventMMStartAni")) {
+				ani.morph.push_back(this->parse_eventMMStartAni());
+				ani.event_lines.push_back({MdsAniEventType::MORPH_ANIMATION, ani.morph.size() - 1});
+			} else if (iequals(kw, "*eventCamTremor")) {
 				ani.tremors.push_back(this->parse_eventCamTremor());
+				ani.event_lines.push_back({MdsAniEventType::CAMERA_TREMOR, ani.tremors.size() - 1});
 			} else {
 				throw ScriptSyntaxError {_m_stream.format_location(), "invalid KEYWORD in \"ani\" block: " + kw};
 			}

@@ -9,6 +9,7 @@
 
 namespace zenkit {
 	class Read;
+	class Write;
 
 	enum class MdsEventType : uint8_t {
 		UNKNOWN = 0,
@@ -194,6 +195,22 @@ namespace zenkit {
 		std::string node {};
 	};
 
+	/// \brief Type of animation event in a model script
+	enum class MdsAniEventType : uint8_t {
+		EVENT_TAG,
+		PARTICLE_EFFECT,
+		PARTICLE_EFFECT_STOP,
+		SOUND_EFFECT,
+		SOUND_EFFECT_GROUND,
+		MORPH_ANIMATION,
+		CAMERA_TREMOR
+	};
+
+	struct MdsAniEventLine {
+		MdsAniEventType type;
+		std::size_t index;
+	};
+
 	/// \brief The `aniAlias` tag
 	/// \remark MDS syntax: `ani(<string> <int> <string> <float> <float> <flags> <string> <F|R> <int> <int>
 	///         [FPS:<float>] [CVS:<float>])`
@@ -219,6 +236,8 @@ namespace zenkit {
 		std::vector<MdsSoundEffectGround> sfx_ground {};
 		std::vector<MdsMorphAnimation> morph {};
 		std::vector<MdsCameraTremor> tremors {};
+
+		std::vector<MdsAniEventLine> event_lines {};
 	};
 
 	/// \brief The `aniAlias` tag
@@ -256,6 +275,27 @@ namespace zenkit {
 		std::int32_t last_frame;
 	};
 
+	/// \brief Type of element in a model script
+	enum class MdsElementType : uint8_t {
+		SKELETON,
+		ANIMATION,
+		ANIMATION_ALIAS,
+		ANIMATION_BLEND,
+		ANIMATION_COMBINE,
+		ANIMATION_DISABLED,
+		MODEL_TAG,
+		MESH,
+		ANI_ENUM,
+		ANI_ENUM_END,
+	};
+
+	/// \brief Represents a single element in a model script in source order.
+	/// \details Stores element type and index into the corresponding vector.
+	struct MdsLine {
+		MdsElementType type;
+		std::size_t index;
+	};
+
 	/// \brief Represents a *ZenGin* model script.
 	///
 	/// <p>Model scripts contain animations related to a model and actions the animation controller should take during
@@ -263,6 +303,9 @@ namespace zenkit {
 	class ModelScript {
 	public:
 		ZKAPI void load(Read* r);
+
+		ZKINT void save_binary(Write* w);
+		ZKINT void save_source(Write* w);
 
 	private:
 		ZKINT void load_binary(Read* r);
@@ -283,5 +326,8 @@ namespace zenkit {
 		std::vector<MdsAnimationAlias> aliases {};
 		std::vector<MdsModelTag> model_tags {};
 		std::vector<MdsAnimation> animations {};
+
+		/// \brief All elements in source order (for preserving order during conversion)
+		std::vector<MdsLine> lines {};
 	};
 } // namespace zenkit

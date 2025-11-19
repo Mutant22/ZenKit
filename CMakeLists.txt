@@ -56,6 +56,7 @@ list(APPEND _ZK_SOURCES
         src/ModelHierarchy.cc
         src/ModelMesh.cc
         src/ModelScript.cc
+        src/ModelScriptGenerator.cc
         src/ModelScriptDsl.cc
         src/MorphMesh.cc
         src/MultiResolutionMesh.cc
