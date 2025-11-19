@@ -391,7 +391,7 @@ namespace zenkit {
 			    case ModelScriptBinaryChunkType::EVENT_PFX: {
 				    MdsParticleEffect effect {};
 				    effect.frame = c->read_int();
-				    effect.index = c->read_int();
+				    effect.index = (int32_t)c->read_float();
 				    effect.name = c->read_line(false);
 				    effect.position = c->read_line(false);
 				    effect.attached = c->read_uint() != 0;
@@ -402,7 +402,7 @@ namespace zenkit {
 			    case ModelScriptBinaryChunkType::EVENT_PFX_STOP: {
 				    MdsParticleEffectStop effect {};
 				    effect.frame = c->read_int();
-				    effect.index = c->read_int();
+				    effect.index = (int32_t)c->read_float();
 				    script.animations[ani_index].pfx_stop.push_back(effect);
 				    script.animations[ani_index].event_lines.push_back({MdsAniEventType::PARTICLE_EFFECT_STOP, script.animations[ani_index].pfx_stop.size() - 1});
 				    break;
