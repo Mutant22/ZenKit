@@ -312,7 +312,6 @@ namespace zenkit {
 				script.skeleton = this->parse_meshAndTree();
 			} else if (iequals(kw, "registerMesh")) {
 				script.meshes.push_back(this->parse_registerMesh());
-			} else if (iequals(kw, "aniEnum")) {
 				script.lines.push_back({MdsElementType::MESH, script.meshes.size() - 1});
 			} else if (iequals(kw, "aniEnum")) {
 				this->parse_aniEnum(script);
@@ -351,15 +350,6 @@ namespace zenkit {
 			auto kw = this->expect_keyword();
 			if (iequals(kw, "ani")) {
 				into.animations.push_back(this->parse_ani());
-			} else if (iequals(kw, "aniBlend")) {
-				into.blends.push_back(this->parse_aniBlend());
-			} else if (iequals(kw, "aniAlias")) {
-				into.aliases.push_back(this->parse_aniAlias());
-			} else if (iequals(kw, "aniComb")) {
-				into.combinations.push_back(this->parse_aniComb());
-			} else if (iequals(kw, "aniDisable")) {
-				into.disabled_animations.push_back(this->parse_aniDisable());
-			} else if (iequals(kw, "modelTag")) {
 				into.lines.push_back({MdsElementType::ANIMATION, into.animations.size() - 1});
 			} else if (iequals(kw, "aniBlend")) {
 				into.blends.push_back(this->parse_aniBlend());
@@ -393,18 +383,6 @@ namespace zenkit {
 				ani.events.push_back(this->parse_eventTag());
 			} else if (iequals(kw, "*eventSFX")) {
 				ani.sfx.push_back(this->parse_eventSFX());
-			} else if (iequals(kw, "*eventSFXGrnd")) {
-				ani.sfx_ground.push_back(this->parse_eventSFXGrnd());
-			} else if (iequals(kw, "*eventPFX")) {
-				ani.pfx.push_back(this->parse_eventPFX());
-			} else if (iequals(kw, "*eventPFXStop")) {
-				ani.pfx_stop.push_back(this->parse_eventPFXStop());
-			} else if (iequals(kw, "*eventMMStartAni")) {
-				ani.morph.push_back(this->parse_eventMMStartAni());
-			} else if (iequals(kw, "*eventCamTremor")) {
-				ani.event_lines.push_back({MdsAniEventType::EVENT_TAG, ani.events.size() - 1});
-			} else if (iequals(kw, "*eventSFX")) {
-				ani.sfx.push_back(this->parse_eventSFX());
 				ani.event_lines.push_back({MdsAniEventType::SOUND_EFFECT, ani.sfx.size() - 1});
 			} else if (iequals(kw, "*eventSFXGrnd")) {
 				ani.sfx_ground.push_back(this->parse_eventSFXGrnd());
@@ -419,7 +397,7 @@ namespace zenkit {
 				ani.morph.push_back(this->parse_eventMMStartAni());
 				ani.event_lines.push_back({MdsAniEventType::MORPH_ANIMATION, ani.morph.size() - 1});
 			} else if (iequals(kw, "*eventCamTremor")) {
-				ani.tremors.push_back(this->parse_eventCamTremor());
+				ani.event_lines.push_back({MdsAniEventType::EVENT_TAG, ani.events.size() - 1});
 				ani.event_lines.push_back({MdsAniEventType::CAMERA_TREMOR, ani.tremors.size() - 1});
 			} else {
 				throw ScriptSyntaxError {_m_stream.format_location(), "invalid KEYWORD in \"ani\" block: " + kw};
@@ -519,7 +497,7 @@ namespace zenkit {
 		ani.direction = iequals(kw, "R") ? AnimationDirection::BACKWARD : AnimationDirection::FORWARD;
 		ani.first_frame = this->expect_int();
 		ani.last_frame = this->expect_int();
-		ani.speed = 0; // TODO
+		ani.speed = 0; // TODO:  this->maybe_named("SPD").value_or(0);
 
 		ani.fps = this->maybe_named("FPS").value_or(25);
 		ani.collision_volume_scale = this->maybe_named("CVS").value_or(1);

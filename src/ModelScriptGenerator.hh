@@ -10,7 +10,7 @@ namespace zenkit {
 
 	class MdsGenerator {
 	public:
-		explicit MdsGenerator(Write* w);
+		explicit MdsGenerator(Write* w, const std::string& model_name);
 
 		void generate_script(const ModelScript& script);
 
@@ -34,11 +34,12 @@ namespace zenkit {
 		std::string format_direction(AnimationDirection dir);
 
 		Write* _m_writer;
+		std::string _m_model_name;
 	};
 
 	class MdsBinaryGenerator {
 	public:
-		explicit MdsBinaryGenerator(Write* w);
+		explicit MdsBinaryGenerator(Write* w, const std::string& model_name);
 
 		void generate_script(const ModelScript& script);
 
@@ -58,7 +59,9 @@ namespace zenkit {
 		void write_event_pfx_stop(const MdsParticleEffectStop& pfx);
 		void write_event_morph(const MdsMorphAnimation& morph);
 		void write_event_tremor(const MdsCameraTremor& tremor);
+		std::string format_flags(AnimationFlags flags);
 
 		Write* _m_writer;
+		std::string _m_model_name;
 	};
 } // namespace zenkit

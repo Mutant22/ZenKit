@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace zenkit {
@@ -60,6 +61,69 @@ namespace zenkit {
 		opt_frame ZKREM("renamed to MdsEventType::OPTIMAL_FRAME") = OPTIMAL_FRAME,
 		hit_end ZKREM("renamed to MdsEventType::HIT_END") = HIT_END,
 		window ZKREM("renamed to MdsEventType::COMBO_WINDOW") = COMBO_WINDOW,
+	};
+
+	enum class ModelScriptBinaryChunkType : uint16_t {
+		// model_mesh = 0xD000,
+		ROOT = 0xF000,
+		END = 0xFFFF,
+		SOURCE = 0xF100,
+		// model = 0xF200,
+		// model_end = 0xF2FF,
+		MESH_AND_TREE = 0xF300,
+		REGISTER_MESH = 0xF400,
+		animation_enum = 0xF500,
+		animation_enum_end = 0xF5FF,
+		// CHUNK_ANI_MAX_FPS           = 0xF510,
+		ANIMATION = 0xF520,
+		ANIMATION_ALIAS = 0xF530,
+		ANIMATION_BLEND = 0xF540,
+		// CHUNK_ANI_SYNC              = 0xF550,
+		// CHUNK_ANI_BATCH             = 0xF560,
+		ANIMATION_COMBINE = 0xF570,
+		ANIMATION_DISABLE = 0xF580,
+		MODEL_TAG = 0xF590,
+		ANIMATION_EVENTS = 0xF5A0,
+		// animation_events_end = 0xF5AF,
+		EVENT_SFX = 0xF5A1,
+		EVENT_SFX_GROUND = 0xF5A2,
+		EVENT_TAG = 0xF5A3,
+		EVENT_PFX = 0xF5A4,
+		EVENT_PFX_STOP = 0xF5A5,
+		// CHUNK_EVENT_PFX_GRND        = 0xF5A6,
+		// CHUNK_EVENT_SET_MESH        = 0xF5A7,
+		// CHUNK_EVENT_SWAP_MESH       = 0xF5A8,
+		EVENT_MM_ANI = 0xF5A9,
+		EVENT_CAMERA_TREMOR = 0xF5AA,
+		UNKNOWN,
+	};
+
+	std::unordered_map<std::string, MdsEventType> const event_types {
+	    {"DEF_CREATE_ITEM", MdsEventType::ITEM_CREATE},
+	    {"DEF_INSERT_ITEM", MdsEventType::ITEM_INSERT},
+	    {"DEF_REMOVE_ITEM", MdsEventType::ITEM_REMOVE},
+	    {"DEF_DESTROY_ITEM", MdsEventType::ITEM_DESTROY},
+	    {"DEF_PLACE_ITEM", MdsEventType::ITEM_PLACE},
+	    {"DEF_EXCHANGE_ITEM", MdsEventType::ITEM_EXCHANGE},
+	    {"DEF_FIGHTMODE", MdsEventType::SET_FIGHT_MODE},
+	    {"DEF_PLACE_MUNITION", MdsEventType::MUNITION_PLACE},
+	    {"DEF_REMOVE_MUNITION", MdsEventType::MUNITION_REMOVE},
+	    {"DEF_DRAWSOUND", MdsEventType::SOUND_DRAW},
+	    {"DEF_UNDRAWSOUND", MdsEventType::SOUND_UNDRAW},
+	    {"DEF_SWAPMESH", MdsEventType::MESH_SWAP},
+	    {"DEF_DRAWTORCH", MdsEventType::TORCH_DRAW},
+	    {"DEF_INV_TORCH", MdsEventType::TORCH_INVENTORY},
+	    {"DEF_DROP_TORCH", MdsEventType::TORCH_DROP},
+	    {"DEF_HIT_LIMB", MdsEventType::HIT_LIMB},
+	    {"HIT_LIMB", MdsEventType::HIT_LIMB},
+	    {"DEF_HIT_DIR", MdsEventType::HIT_DIRECTION},
+	    {"DEF_DIR", MdsEventType::HIT_DIRECTION}, // TODO: Validate this!
+	    {"DEF_DAM_MULTIPLIER", MdsEventType::DAMAGE_MULTIPLIER},
+	    {"DEF_DAM_MULTIPLY", MdsEventType::DAMAGE_MULTIPLIER},
+	    {"DEF_PAR_FRAME", MdsEventType::PARRY_FRAME},
+	    {"DEF_OPT_FRAME", MdsEventType::OPTIMAL_FRAME},
+	    {"DEF_HIT_END", MdsEventType::HIT_END},
+	    {"DEF_WINDOW", MdsEventType::COMBO_WINDOW},
 	};
 
 	/// \brief A set of fight stances the player can take.
@@ -304,8 +368,8 @@ namespace zenkit {
 	public:
 		ZKAPI void load(Read* r);
 
-		ZKINT void save_binary(Write* w);
-		ZKINT void save_source(Write* w);
+		ZKINT void save_binary(Write* w, const std::string& model_name);
+		ZKINT void save_source(Write* w, const std::string& model_name);
 
 	private:
 		ZKINT void load_binary(Read* r);
